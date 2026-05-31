@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YardLog — Lawn & Garden Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-50: #EAF3DE; --green-100: #C0DD97; --green-200: #97C459;
+    --green-400: #639922; --green-600: #3B6D11; --green-800: #27500A; --green-900: #173404;
+    --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-200: #EF9F27;
+    --amber-400: #BA7517; --amber-600: #854F0B; --amber-800: #633806;
+    --red-50: #FCEBEB; --red-100: #F7C1C1; --red-200: #F09595;
+    --red-400: #E24B4A; --red-600: #A32D2D;
+    --blue-50: #E6F1FB; --blue-100: #B5D4F4; --blue-200: #85B7EB;
+    --blue-400: #378ADD; --blue-600: #185FA5; --blue-800: #0C447C;
+    --teal-50: #E1F5EE; --teal-100: #9FE1CB; --teal-400: #1D9E75; --teal-600: #0F6E56;
+    --gray-50: #F6F5F0; --gray-100: #E8E6DF; --gray-200: #D3D1C7;
+    --gray-400: #888780; --gray-600: #5F5E5A; --gray-800: #444441;
+    --radius: 12px; --radius-sm: 8px; --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --ff-display: 'DM Serif Display', Georgia, serif;
+    --ff-body: 'DM Sans', system-ui, sans-serif;
+  }
+  [data-theme="dark"] {
+    --bg: #1a1c18; --bg2: #22251f; --bg3: #2a2e26;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+    --text: #e8e6df; --text2: #a8a89f; --text3: #6e6e68;
+    --card: #22251f; --card2: #2a2e26;
+  }
+  [data-theme="light"] {
+    --bg: #f6f5f0; --bg2: #eeede8; --bg3: #e4e3dc;
+    --border: rgba(0,0,0,0.08); --border2: rgba(0,0,0,0.15);
+    --text: #1a1c18; --text2: #5f5e5a; --text3: #88877f;
+    --card: #ffffff; --card2: #f6f5f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--ff-body); background: var(--bg); color: var(--text);
+    min-height: 100vh; transition: background 0.2s, color 0.2s;
+    font-size: 15px; line-height: 1.5;
+  }
+  .header {
+    background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 0 1.25rem; display: flex; align-items: center; justify-content: space-between;
+    height: 60px; position: sticky; top: 0; z-index: 100; gap: 1rem;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { font-size: 24px; }
+  .logo-text { font-family: var(--ff-display); font-size: 1.4rem; color: var(--green-600); }
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+  /* Weather source badge in header */
+  .wx-source-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 20px;
+    background: var(--green-50); color: var(--green-800);
+    border: 1px solid var(--green-100); font-weight: 600; letter-spacing: .04em;
+    display: none;
+  }
+  [data-theme="dark"] .wx-source-badge { background: rgba(99,153,34,0.15); color: var(--green-200); border-color: rgba(99,153,34,0.3); }
+  .wx-source-badge.fallback { background: var(--amber-50); color: var(--amber-600); border-color: var(--amber-100); }
+  [data-theme="dark"] .wx-source-badge.fallback { background: rgba(186,117,23,0.15); color: var(--amber-100); }
+  .btn { padding: 7px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border2); background: transparent; color: var(--text); font-family: var(--ff-body); font-size: 13px; cursor: pointer; transition: background 0.15s; white-space: nowrap; }
+  .btn:hover { background: var(--bg2); }
+  .btn-primary { background: var(--green-400); color: white; border-color: var(--green-400); font-weight: 500; }
+  .btn-primary:hover { background: var(--green-600); border-color: var(--green-600); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--text2); transition: background 0.15s; }
+  .icon-btn:hover { background: var(--bg2); color: var(--text); }
+  .nav-tabs { display: flex; gap: 2px; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 1rem; overflow-x: auto; }
+  .nav-tab { padding: 10px 16px; font-size: 13px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text2); transition: all 0.15s; white-space: nowrap; }
+  .nav-tab.active { color: var(--green-600); border-bottom-color: var(--green-600); }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.25rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+  .card-sm { padding: 1rem; }
+  .card-title { font-family: var(--ff-display); font-size: 1.1rem; color: var(--text); margin-bottom: .75rem; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .75rem; }
+  .stat { background: var(--card2); border-radius: var(--radius-sm); padding: .875rem 1rem; }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); font-weight: 500; margin-bottom: 4px; }
+  .stat-value { font-size: 1.5rem; font-weight: 600; color: var(--text); font-family: var(--ff-display); }
+  .stat-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--green-50); color: var(--green-800); }
+  .badge-amber { background: var(--amber-50); color: var(--amber-600); }
+  .badge-red { background: var(--red-50); color: var(--red-600); }
+  .badge-blue { background: var(--blue-50); color: var(--blue-800); }
+  .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .cal-month { font-family: var(--ff-display); font-size: 1.3rem; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+  .cal-day-name { text-align: center; font-size: 11px; font-weight: 600; color: var(--text3); padding: 4px 0; text-transform: uppercase; letter-spacing: .06em; }
+  .cal-cell { min-height: 70px; border-radius: var(--radius-sm); background: var(--card2); border: 1px solid var(--border); padding: 6px; cursor: pointer; transition: all 0.15s; position: relative; }
+  .cal-cell:hover { border-color: var(--green-400); }
+  .cal-cell.today { border-color: var(--green-400); background: var(--green-50); }
+  [data-theme="dark"] .cal-cell.today { background: rgba(99,153,34,0.15); }
+  .cal-cell.selected { border-color: var(--green-600); box-shadow: 0 0 0 2px rgba(99,153,34,0.25); }
+  .cal-cell.other-month { opacity: 0.4; }
+  .cal-num { font-size: 13px; font-weight: 500; color: var(--text2); }
+  .cal-cell.today .cal-num { color: var(--green-600); font-weight: 600; }
+  .cal-dots { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 4px; }
+  .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .cal-weather { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .log-entry { display: flex; align-items: flex-start; gap: .875rem; padding: .875rem 0; border-bottom: 1px solid var(--border); }
+  .log-entry:last-child { border-bottom: none; }
+  .log-icon { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+  .log-icon.mow { background: var(--green-50); }
+  .log-icon.fertilize { background: var(--amber-50); }
+  .log-icon.herbicide { background: var(--red-50); }
+  .log-icon.pesticide { background: var(--blue-50); }
+  .log-icon.water { background: var(--teal-50); }
+  .log-icon.seed { background: var(--green-50); }
+  .log-icon.aerate { background: var(--gray-100); }
+  .log-icon.other { background: var(--gray-100); }
+  .log-info { flex: 1; min-width: 0; }
+  .log-title { font-weight: 500; font-size: 14px; }
+  .log-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .log-notes { font-size: 12px; color: var(--text3); margin-top: 4px; font-style: italic; }
+  .weather-current { display: flex; align-items: center; gap: 1.5rem; padding: 1rem 0; }
+  .weather-temp { font-family: var(--ff-display); font-size: 3.5rem; line-height: 1; }
+  .weather-icon { font-size: 3rem; }
+  .weather-details { flex: 1; }
+  .weather-condition { font-size: 1rem; font-weight: 500; }
+  .weather-extra { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .forecast-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin-top: 1rem; }
+  .forecast-day { background: var(--card2); border-radius: var(--radius-sm); padding: .75rem .5rem; text-align: center; }
+  .forecast-day-name { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+  .forecast-icon { font-size: 1.4rem; margin: 6px 0; }
+  .forecast-hi { font-size: 14px; font-weight: 600; }
+  .forecast-lo { font-size: 12px; color: var(--text2); }
+  .forecast-precip { font-size: 10px; color: var(--blue-600); margin-top: 3px; }
+  .radar-container { position: relative; width: 100%; padding-bottom: 60%; background: #1a2a1a; border-radius: var(--radius-sm); overflow: hidden; }
+  .radar-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
+  .rec-card { border-left: 4px solid transparent; padding: .875rem 1rem; background: var(--card2); border-radius: var(--radius-sm); }
+  .rec-card.go { border-color: var(--green-400); }
+  .rec-card.caution { border-color: var(--amber-200); }
+  .rec-card.stop { border-color: var(--red-400); }
+  .rec-title { font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .rec-reason { font-size: 13px; color: var(--text2); margin-top: 4px; }
+  .form-group { margin-bottom: 1rem; }
+  .form-label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 5px; }
+  .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: var(--card); color: var(--text); font-family: var(--ff-body); font-size: 14px; }
+  .form-control:focus { outline: none; border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(99,153,34,0.15); }
+  select.form-control { cursor: pointer; }
+  textarea.form-control { resize: vertical; min-height: 70px; }
+  .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1rem; }
+  .type-pill { padding: 10px 6px; border-radius: var(--radius-sm); border: 2px solid var(--border); background: var(--card2); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .type-pill:hover { border-color: var(--green-200); }
+  .type-pill.selected { border-color: var(--green-400); background: var(--green-50); }
+  [data-theme="dark"] .type-pill.selected { background: rgba(99,153,34,0.15); }
+  .type-pill-icon { font-size: 1.4rem; display: block; }
+  .type-pill-label { font-size: 10px; font-weight: 500; color: var(--text2); margin-top: 4px; display: block; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; padding: 1rem; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--card); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+  .modal-title { font-family: var(--ff-display); font-size: 1.2rem; }
+  .day-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-top: 1rem; }
+  .day-panel-title { font-family: var(--ff-display); font-size: 1.2rem; margin-bottom: 1rem; }
+  /* Weather status bar */
+  .wx-status-bar {
+    display: flex; align-items: center; gap: 8px; padding: 6px 12px;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    font-size: 11px; color: var(--text3);
+  }
+  .wx-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gray-400); flex-shrink: 0; }
+  .wx-status-dot.loading { background: var(--amber-200); animation: pulse 1s infinite; }
+  .wx-status-dot.ok { background: var(--green-400); }
+  .wx-status-dot.fallback { background: var(--amber-400); }
+  .wx-status-dot.error { background: var(--red-400); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .retry-btn { background: none; border: none; color: var(--blue-600); font-size: 11px; cursor: pointer; padding: 0; font-family: var(--ff-body); text-decoration: underline; }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: .875rem 0; border-bottom: 1px solid var(--border); }
+  .settings-row:last-child { border-bottom: none; }
+  .toggle { width: 42px; height: 24px; border-radius: 12px; background: var(--gray-200); position: relative; cursor: pointer; transition: background 0.2s; border: none; }
+  .toggle.on { background: var(--green-400); }
+  .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: white; transition: transform 0.2s; }
+  .toggle.on::after { transform: translateX(18px); }
+  .flex { display: flex; } .gap-sm { gap: .5rem; } .gap-md { gap: 1rem; }
+  .items-center { align-items: center; } .justify-between { justify-content: space-between; }
+  .flex-1 { flex: 1; } .mt-sm { margin-top: .5rem; } .mt-md { margin-top: 1rem; }
+  .mt-lg { margin-top: 1.5rem; } .mb-sm { margin-bottom: .5rem; } .mb-md { margin-bottom: 1rem; }
+  .text-sm { font-size: 13px; } .text-xs { font-size: 12px; } .text-muted { color: var(--text2); }
+  .fw-500 { font-weight: 500; } .fw-600 { font-weight: 600; }
+  .section-title { font-family: var(--ff-display); font-size: 1.5rem; margin-bottom: 1.25rem; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+  .empty-state { text-align: center; padding: 2rem; color: var(--text2); }
+  .empty-state .emoji { font-size: 2.5rem; margin-bottom: .5rem; }
+  @media (max-width: 600px) {
+    .cal-cell { min-height: 52px; padding: 4px; }
+    .weather-current { gap: 1rem; }
+    .weather-temp { font-size: 2.5rem; }
+    .type-grid { grid-template-columns: repeat(4, 1fr); }
+    .header { padding: 0 .875rem; }
+    .main { padding: 1rem .875rem; }
+    .nav-tab { padding: 10px 12px; }
+    .wx-status-bar { display: none; }
+  }
+</style>
+</head>
+<body data-theme="light">
+
+<header class="header">
+  <div class="logo">
+    <span class="logo-icon">🌿</span>
+    <span class="logo-text">YardLog</span>
+  </div>
+  <div class="header-actions">
+    <span class="wx-source-badge" id="wx-source-badge"></span>
+    <button class="btn btn-primary btn-sm" onclick="openLogModal()">+ Log Activity</button>
+    <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle dark mode">🌙</button>
+  </div>
+</header>
+
+<!-- Weather API status bar -->
+<div class="wx-status-bar" id="wx-status-bar">
+  <div class="wx-status-dot loading" id="wx-dot"></div>
+  <span id="wx-status-text">Connecting to weather service…</span>
+  <button class="retry-btn" id="wx-retry-btn" onclick="retryWeather()" style="display:none">Retry</button>
+</div>
+
+<nav class="nav-tabs">
+  <div class="nav-tab active" onclick="showSection('dashboard')">Dashboard</div>
+  <div class="nav-tab" onclick="showSection('calendar')">Calendar</div>
+  <div class="nav-tab" onclick="showSection('weather')">Weather</div>
+  <div class="nav-tab" onclick="showSection('log')">Activity Log</div>
+  <div class="nav-tab" onclick="showSection('settings')">Settings</div>
+</nav>
+
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <section class="section active" id="section-dashboard">
+    <div class="section-title" id="dash-greeting">Good morning 👋</div>
+    <div class="grid-4 mb-md" id="stats-grid"></div>
+    <div class="grid-2">
+      <div>
+        <div class="card mb-md">
+          <div class="card-title">Today's Conditions</div>
+          <div id="dash-weather-now"><div class="text-muted text-sm">Loading weather…</div></div>
+          <hr class="divider">
+          <div class="card-title" style="font-size:.95rem">AI Recommendations</div>
+          <div id="dash-recommendations"><div class="text-muted text-sm">Loading…</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card mb-md">
+          <div class="flex items-center justify-between mb-sm">
+            <div class="card-title" style="margin:0">Recent Activity</div>
+            <button class="btn btn-sm" onclick="showSection('log')">View All</button>
+          </div>
+          <div id="dash-recent"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">7-Day Forecast</div>
+          <div class="forecast-strip" id="dash-forecast"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="section" id="section-calendar">
+    <div class="section-title">Calendar</div>
+    <div class="card">
+      <div class="cal-header">
+        <button class="icon-btn" onclick="changeMonth(-1)">‹</button>
+        <div class="cal-month" id="cal-month-label"></div>
+        <button class="icon-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div id="day-panel" style="display:none"></div>
+  </section>
+
+  <!-- WEATHER -->
+  <section class="section" id="section-weather">
+    <div class="section-title">Weather</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Current Conditions</div>
+        <div id="weather-current-full"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">7-Day Forecast</div>
+        <div id="weather-forecast-full"></div>
+      </div>
+    </div>
+    <div class="card mt-md">
+      <div class="card-title">Live Radar — Nashville, TN</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:.75rem">Via Iowa Environmental Mesonet (NWS data)</div>
+      <div class="radar-container">
+        <iframe class="radar-iframe"
+          src="https://mesonet.agron.iastate.edu/GIS/radmap.php?layers[]=n0q&layers[]=sbw&layers[]=uscounties&lat=36.1627&lon=-86.7816&zoom=7&width=100%&height=100%"
+          title="NWS Radar Nashville">
+        </iframe>
+      </div>
+      <div style="margin-top:.75rem;text-align:center">
+        <a href="https://radar.weather.gov/station/KOHX/standard" target="_blank" style="color:var(--blue-600);font-size:13px;">
+          🔗 Open Full Radar on weather.gov
+        </a>
+      </div>
+    </div>
+    <!-- NWS API Info Panel -->
+    <div class="card mt-md" id="wx-api-info-panel">
+      <div class="card-title">Weather Data Source</div>
+      <div id="wx-api-details" style="font-size:13px;color:var(--text2);line-height:1.7"></div>
+    </div>
+  </section>
+
+  <!-- ACTIVITY LOG -->
+  <section class="section" id="section-log">
+    <div class="flex items-center justify-between mb-md">
+      <div class="section-title" style="margin:0">Activity Log</div>
+      <button class="btn btn-primary" onclick="openLogModal()">+ Log Activity</button>
+    </div>
+    <div class="card">
+      <div class="flex gap-sm mb-md" style="flex-wrap:wrap">
+        <select class="form-control" style="width:auto;flex:1;min-width:140px" id="filter-type" onchange="renderLog()">
+          <option value="">All Types</option>
+          <option value="mow">🌿 Mow</option>
+          <option value="fertilize">🌱 Fertilize</option>
+          <option value="herbicide">☠️ Herbicide</option>
+          <option value="pesticide">🐛 Pesticide</option>
+          <option value="water">💧 Water/Irrigate</option>
+          <option value="seed">🌾 Seed</option>
+          <option value="aerate">🔵 Aerate</option>
+          <option value="other">📝 Other</option>
+        </select>
+        <input type="month" class="form-control" style="width:auto;flex:1;min-width:140px" id="filter-month" onchange="renderLog()" value="">
+      </div>
+      <div id="log-list"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="section" id="section-settings">
+    <div class="section-title">Settings</div>
+    <div class="card">
+      <div class="card-title">Location</div>
+      <div class="form-group">
+        <label class="form-label">City / Zip</label>
+        <input class="form-control" id="setting-location" placeholder="Nashville, TN" value="">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Weather Source</label>
+        <input class="form-control" id="setting-grid" placeholder="Claude AI" readonly style="color:var(--text2)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Coordinates (auto-detected)</label>
+        <input class="form-control" id="setting-coords" placeholder="—" readonly style="color:var(--text2)">
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Location</button>
+    </div>
+    <div class="card mt-md">
+      <div class="card-title">Lawn Profile</div>
+      <div class="form-group">
+        <label class="form-label">Grass Type</label>
+        <select class="form-control" id="setting-grass">
+          <option value="bermuda">Bermuda</option>
+          <option value="zoysia">Zoysia</option>
+          <option value="fescue">Tall Fescue</option>
+          <option value="centipede">Centipede</option>
+          <option value="st-augustine">St. Augustine</option>
+          <option value="bluegrass">Kentucky Bluegrass</option>
+          <option value="ryegrass">Ryegrass</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Lawn Size (sq ft)</label>
+        <input class="form-control" id="setting-size" type="number" placeholder="5000">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mowing Height (inches)</label>
+        <input class="form-control" id="setting-height" type="number" step="0.25" placeholder="3.5">
+      </div>
+      <button class="btn btn-primary" onclick="saveLawnProfile()">Save Profile</button>
+    </div>
+    <div class="card mt-md">
+      <div class="card-title">Data</div>
+      <div class="settings-row">
+        <div><div class="fw-500 text-sm">Export All Data</div><div class="text-xs text-muted">Download as JSON backup</div></div>
+        <button class="btn btn-sm" onclick="exportData()">Export</button>
+      </div>
+      <div class="settings-row">
+        <div><div class="fw-500 text-sm">Import Data</div><div class="text-xs text-muted">Restore from backup</div></div>
+        <label class="btn btn-sm" style="cursor:pointer">Import<input type="file" accept=".json" style="display:none" onchange="importData(event)"></label>
+      </div>
+      <div class="settings-row">
+        <div><div class="fw-500 text-sm" style="color:var(--red-600)">Clear All Data</div><div class="text-xs text-muted">Remove all activity logs</div></div>
+        <button class="btn btn-sm" style="color:var(--red-600);border-color:var(--red-200)" onclick="clearData()">Clear</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- LOG MODAL -->
+<div class="modal-backdrop" id="log-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Log Yard Activity</div>
+      <button class="icon-btn" onclick="closeLogModal()">✕</button>
+    </div>
+    <div class="type-grid" id="type-pills"></div>
+    <div class="form-group">
+      <label class="form-label">Date</label>
+      <input type="date" class="form-control" id="log-date">
+    </div>
+    <div class="form-group" id="product-group" style="display:none">
+      <label class="form-label">Product / Brand</label>
+      <input type="text" class="form-control" id="log-product" placeholder="e.g. Scotts Turf Builder">
+    </div>
+    <div class="form-group" id="rate-group" style="display:none">
+      <label class="form-label">Application Rate</label>
+      <input type="text" class="form-control" id="log-rate" placeholder="e.g. 2.5 lbs/1000 sq ft">
+    </div>
+    <div class="form-group" id="height-group" style="display:none">
+      <label class="form-label">Cut Height (inches)</label>
+      <input type="number" step="0.25" class="form-control" id="log-cut-height" placeholder="3.5">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-control" id="log-notes" placeholder="Optional notes…"></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Weather at Time</label>
+      <input type="text" class="form-control" id="log-weather" placeholder="e.g. 75°F, sunny, no wind">
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end">
+      <button class="btn" onclick="closeLogModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLog()">Save Activity</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  STATE & STORAGE
+// ═══════════════════════════════════════════════════════════════
+const STORE_KEY = 'yardlog_v1';
+let state = {
+  activities: [],
+  settings: {
+    location: 'Nashville, TN',
+    lat: 36.1627, lon: -86.7816,
+    grid: 'OHX/56,62',
+    grass: 'bermuda',
+    size: 5000,
+    height: 3.5
+  },
+  weather: null,
+  forecast: null,
+  wxMeta: null   // NEW: tracks source, timestamp, grid details
+};
+
+function loadState() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (d) state = { ...state, ...d };
+  } catch(e) {}
+}
+function saveState() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+loadState();
+
+// ═══════════════════════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════════════════════
+let darkMode = localStorage.getItem('yardlog_dark') === '1';
+function applyTheme() {
+  document.body.dataset.theme = darkMode ? 'dark' : 'light';
+  document.getElementById('theme-btn').textContent = darkMode ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  darkMode = !darkMode;
+  localStorage.setItem('yardlog_dark', darkMode ? '1' : '0');
+  applyTheme();
+}
+applyTheme();
+
+// Time-aware greeting
+(function setGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const el = document.getElementById('dash-greeting');
+  if (el) el.textContent = `${g} 👋`;
+})();
+
+// ═══════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  const tabs = ['dashboard', 'calendar', 'weather', 'log', 'settings'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(id)].classList.add('active');
+  if (id === 'calendar') renderCalendar();
+  if (id === 'log') renderLog();
+  if (id === 'settings') loadSettings();
+  if (id === 'weather') { renderWeather(); renderWxApiInfo(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WEATHER STATUS BAR UI
+// ═══════════════════════════════════════════════════════════════
+function setWxStatus(state_str, msg) {
+  // state_str: 'loading' | 'ok' | 'fallback' | 'error'
+  const dot = document.getElementById('wx-dot');
+  const text = document.getElementById('wx-status-text');
+  const retry = document.getElementById('wx-retry-btn');
+  const badge = document.getElementById('wx-source-badge');
+  dot.className = 'wx-status-dot ' + state_str;
+  text.textContent = msg;
+  retry.style.display = state_str === 'error' ? '' : 'none';
+  if (state_str === 'ok') {
+    badge.textContent = 'Claude AI';
+    badge.className = 'wx-source-badge';
+    badge.style.display = '';
+  } else if (state_str === 'fallback') {
+    badge.textContent = 'Claude AI';
+    badge.className = 'wx-source-badge fallback';
+    badge.style.display = '';
+  } else if (state_str === 'error') {
+    badge.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ACTIVITY TYPES
+// ═══════════════════════════════════════════════════════════════
+const TYPES = [
+  { id:'mow',       label:'Mow',       icon:'🌿' },
+  { id:'fertilize', label:'Fertilize', icon:'🌱' },
+  { id:'herbicide', label:'Herbicide', icon:'☠️' },
+  { id:'pesticide', label:'Pesticide', icon:'🐛' },
+  { id:'water',     label:'Water',     icon:'💧' },
+  { id:'seed',      label:'Seed',      icon:'🌾' },
+  { id:'aerate',    label:'Aerate',    icon:'🔵' },
+  { id:'other',     label:'Other',     icon:'📝' }
+];
+let selectedType = 'mow';
+
+function renderTypePills() {
+  document.getElementById('type-pills').innerHTML = TYPES.map(t => `
+    <div class="type-pill${t.id === selectedType ? ' selected' : ''}" onclick="selectType('${t.id}')">
+      <span class="type-pill-icon">${t.icon}</span>
+      <span class="type-pill-label">${t.label}</span>
+    </div>`).join('');
+}
+function selectType(id) {
+  selectedType = id;
+  renderTypePills();
+  document.getElementById('product-group').style.display = ['fertilize','herbicide','pesticide','seed'].includes(id) ? '' : 'none';
+  document.getElementById('rate-group').style.display = ['fertilize','herbicide','pesticide'].includes(id) ? '' : 'none';
+  document.getElementById('height-group').style.display = id === 'mow' ? '' : 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  LOG MODAL
+// ═══════════════════════════════════════════════════════════════
+function openLogModal(prefillDate) {
+  selectedType = 'mow';
+  renderTypePills();
+  document.getElementById('log-date').value = prefillDate || new Date().toISOString().slice(0, 10);
+  document.getElementById('log-product').value = '';
+  document.getElementById('log-rate').value = '';
+  document.getElementById('log-cut-height').value = state.settings.height || '';
+  document.getElementById('log-notes').value = '';
+  document.getElementById('log-weather').value = '';
+  selectType('mow');
+  document.getElementById('log-modal').classList.add('open');
+}
+function closeLogModal() {
+  document.getElementById('log-modal').classList.remove('open');
+}
+function saveLog() {
+  const date = document.getElementById('log-date').value;
+  if (!date) { alert('Please select a date.'); return; }
+  const entry = {
+    id: Date.now(),
+    type: selectedType,
+    date,
+    product:   document.getElementById('log-product').value,
+    rate:      document.getElementById('log-rate').value,
+    cutHeight: document.getElementById('log-cut-height').value,
+    notes:     document.getElementById('log-notes').value,
+    weather:   document.getElementById('log-weather').value,
+    createdAt: new Date().toISOString()
+  };
+  state.activities.unshift(entry);
+  saveState();
+  closeLogModal();
+  renderDashboard();
+  if (document.getElementById('section-log').classList.contains('active')) renderLog();
+  if (document.getElementById('section-calendar').classList.contains('active')) renderCalendar();
+}
+function deleteActivity(id) {
+  if (!confirm('Delete this entry?')) return;
+  state.activities = state.activities.filter(a => a.id !== id);
+  saveState();
+  renderLog();
+  renderDashboard();
+  if (document.getElementById('section-calendar').classList.contains('active')) renderCalendar();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ACTIVITY LOG
+// ═══════════════════════════════════════════════════════════════
+function renderLog() {
+  const typeFilter = document.getElementById('filter-type').value;
+  const monthFilter = document.getElementById('filter-month').value;
+  let list = [...state.activities];
+  if (typeFilter) list = list.filter(a => a.type === typeFilter);
+  if (monthFilter) list = list.filter(a => a.date.startsWith(monthFilter));
+  const el = document.getElementById('log-list');
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><div class="emoji">📋</div><div>No activities yet. Log your first yard activity!</div></div>`;
+    return;
+  }
+  el.innerHTML = list.map(a => entryHTML(a)).join('');
+}
+function entryHTML(a) {
+  const t = TYPES.find(t => t.id === a.type) || TYPES[7];
+  const d = new Date(a.date + 'T12:00:00');
+  const dateStr = d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+  let details = [];
+  if (a.product) details.push(a.product);
+  if (a.rate) details.push(a.rate);
+  if (a.cutHeight) details.push(`Cut: ${a.cutHeight}"`);
+  if (a.weather) details.push(a.weather);
+  return `<div class="log-entry">
+    <div class="log-icon ${a.type}">${t.icon}</div>
+    <div class="log-info">
+      <div class="log-title">${t.label}${details.length ? ' — ' + details.join(' · ') : ''}</div>
+      <div class="log-meta">${dateStr}</div>
+      ${a.notes ? `<div class="log-notes">"${a.notes}"</div>` : ''}
+    </div>
+    <button class="icon-btn" onclick="deleteActivity(${a.id})" title="Delete" style="font-size:12px;flex-shrink:0">✕</button>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CALENDAR
+// ═══════════════════════════════════════════════════════════════
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+let selectedDay = null;
+
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`;
+  const grid = document.getElementById('cal-grid');
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let html = days.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  const first = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  const today = new Date();
+  const actMap = {};
+  state.activities.forEach(a => { if (!actMap[a.date]) actMap[a.date] = []; actMap[a.date].push(a); });
+  const fcastMap = {};
+  if (state.forecast) state.forecast.forEach(f => { fcastMap[f.date] = f; });
+  for (let i = 0; i < first; i++) {
+    html += `<div class="cal-cell other-month"><div class="cal-num">${daysInPrev - first + i + 1}</div></div>`;
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+    const isSel = dateStr === selectedDay;
+    const acts = actMap[dateStr] || [];
+    const fcast = fcastMap[dateStr];
+    const dots = acts.map(a => {
+      const color = { mow:'#639922', fertilize:'#BA7517', herbicide:'#E24B4A', pesticide:'#378ADD', water:'#1D9E75', seed:'#639922', aerate:'#888780', other:'#888780' }[a.type] || '#888';
+      return `<div class="cal-dot" style="background:${color}"></div>`;
+    }).join('');
+    const weatherStr = fcast ? `${fcast.hi}°/${fcast.lo}° ${fcast.icon}` : '';
+    html += `<div class="cal-cell${isToday ? ' today' : ''}${isSel ? ' selected' : ''}" onclick="selectDay('${dateStr}')">
+      <div class="cal-num">${d}</div>
+      ${dots ? `<div class="cal-dots">${dots}</div>` : ''}
+      <div class="cal-weather">${weatherStr}</div>
+    </div>`;
+  }
+  const total = first + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-cell other-month"><div class="cal-num">${i}</div></div>`;
+  }
+  grid.innerHTML = html;
+  if (selectedDay) showDayPanel(selectedDay);
+}
+function selectDay(dateStr) {
+  selectedDay = dateStr;
+  renderCalendar();
+  showDayPanel(dateStr);
+}
+function showDayPanel(dateStr) {
+  const panel = document.getElementById('day-panel');
+  const d = new Date(dateStr + 'T12:00:00');
+  const dateLabel = d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const acts = state.activities.filter(a => a.date === dateStr);
+  const fcast = state.forecast ? state.forecast.find(f => f.date === dateStr) : null;
+  const recs = getRecommendations(fcast, dateStr);
+  panel.style.display = '';
+  panel.innerHTML = `
+    <div class="day-panel">
+      <div class="flex items-center justify-between mb-md">
+        <div class="day-panel-title">${dateLabel}</div>
+        <button class="btn btn-primary btn-sm" onclick="openLogModal('${dateStr}')">+ Log</button>
+      </div>
+      ${fcast ? `
+        <div class="flex gap-sm items-center mb-md" style="flex-wrap:wrap">
+          <span style="font-size:1.8rem">${fcast.icon}</span>
+          <span style="font-size:1.1rem;font-weight:600">${fcast.hi}° / ${fcast.lo}°</span>
+          <span class="text-muted">${fcast.shortForecast || ''}</span>
+          ${fcast.precip > 20 ? `<span class="badge badge-blue">💧 ${fcast.precip}% rain</span>` : ''}
+          ${fcast.wind ? `<span class="badge" style="background:var(--gray-100);color:var(--gray-800)">💨 ${fcast.wind}</span>` : ''}
+        </div>` : `<div class="text-sm text-muted mb-md">No forecast available for this date.</div>`}
+      <div class="card-title" style="font-size:.95rem">Recommendations</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:1rem">
+        ${recs.map(r => `
+          <div class="rec-card ${r.status}">
+            <div class="rec-title">${r.icon} ${r.activity}</div>
+            <div class="rec-reason">${r.reason}</div>
+          </div>`).join('')}
+      </div>
+      <div class="card-title" style="font-size:.95rem">Activities</div>
+      ${acts.length ? acts.map(a => entryHTML(a)).join('') : `<div class="text-sm text-muted">No activities logged for this day.</div>`}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RECOMMENDATIONS ENGINE
+// ═══════════════════════════════════════════════════════════════
+function getRecommendations(fcast, dateStr) {
+  const recs = [];
+  const date = new Date(dateStr + 'T12:00:00');
+  const month = date.getMonth();
+  const grass = state.settings.grass || 'bermuda';
+  const hi = fcast ? fcast.hi : null;
+  const lo = fcast ? fcast.lo : null;
+  const precip = fcast ? (fcast.precip || 0) : 0;
+  const windStr = fcast ? (fcast.wind || '') : '';
+  const windSpd = parseInt(windStr) || 0;
+  const isRaining = precip > 50;
+  const isCold = lo !== null && lo < 35;
+  const isHot = hi !== null && hi > 95;
+  const isWindy = windSpd > 15;
+
+  // MOWING
+  let mowStatus, mowReason;
+  if (isRaining) { mowStatus='stop'; mowReason='Rain expected — wet grass cuts poorly and can spread disease. Wait for dry conditions.'; }
+  else if (isCold) { mowStatus='stop'; mowReason='Too cold — grass may be dormant or frost-damaged. Avoid mowing below 40°F.'; }
+  else if (isHot && precip < 10) { mowStatus='caution'; mowReason='Heat stress possible. Mow early morning and raise blade height to reduce stress.'; }
+  else if (['bermuda','zoysia','centipede','st-augustine'].includes(grass) && (month < 3 || month > 9)) { mowStatus='stop'; mowReason='Warm-season grass is likely dormant this time of year. Hold off on mowing.'; }
+  else { mowStatus='go'; mowReason='Good conditions for mowing! Ideal when grass is dry and temps are moderate.'; }
+  recs.push({ activity:'Mowing', icon:'🌿', status:mowStatus, reason:mowReason });
+
+  // HERBICIDE
+  let herbStatus, herbReason;
+  if (isWindy) { herbStatus='stop'; herbReason=`Wind at ${windSpd} mph — herbicide drift risk is high. Apply only when wind is under 10 mph.`; }
+  else if (isRaining || precip > 40) { herbStatus='stop'; herbReason='Rain expected within 24 hours will wash away herbicide before it absorbs. Reschedule.'; }
+  else if (isCold) { herbStatus='stop'; herbReason='Cold temperatures reduce herbicide effectiveness. Most work best above 50°F.'; }
+  else if (isHot) { herbStatus='caution'; herbReason='High temps can volatilize some herbicides. Apply early morning and check product label for temp limits.'; }
+  else { herbStatus='go'; herbReason='Good conditions. Low wind, no rain expected. Ideal for pre- or post-emergent application.'; }
+  recs.push({ activity:'Herbicide', icon:'☠️', status:herbStatus, reason:herbReason });
+
+  // FERTILIZER
+  let fertStatus, fertReason;
+  if (precip > 20 && precip < 60) { fertStatus='go'; fertReason='Light rain forecast can help activate granular fertilizer — great timing!'; }
+  else if (precip > 60) { fertStatus='caution'; fertReason='Heavy rain may wash fertilizer off before it absorbs. Consider liquid or wait for lighter rain.'; }
+  else if (isCold) { fertStatus='stop'; fertReason='Grass is likely dormant or slow-growing. Fertilizing now wastes product and can burn.'; }
+  else if (isHot && precip < 10) { fertStatus='caution'; fertReason='Heat + drought stress. Avoid fertilizing dry lawns — can burn. Water first if applying.'; }
+  else {
+    const warmSeason = ['bermuda','zoysia','centipede','st-augustine'].includes(grass);
+    if (warmSeason && month >= 4 && month <= 8) { fertStatus='go'; fertReason='Peak growing season for warm-season grass — excellent time to fertilize!'; }
+    else if (!warmSeason && ((month >= 3 && month <= 5) || (month >= 8 && month <= 10))) { fertStatus='go'; fertReason='Good timing for cool-season grass fertilization.'; }
+    else { fertStatus='caution'; fertReason='Outside the ideal fertilization window. Check your grass type schedule.'; }
+  }
+  recs.push({ activity:'Fertilizing', icon:'🌱', status:fertStatus, reason:fertReason });
+
+  // SEEDING
+  let seedStatus, seedReason;
+  const warmSeason2 = ['bermuda','zoysia','centipede','st-augustine'].includes(grass);
+  if (warmSeason2 && month >= 4 && month <= 6) { seedStatus='go'; seedReason='Soil temps warming up — ideal window for warm-season grass seeding/overseeding.'; }
+  else if (!warmSeason2 && month >= 8 && month <= 10) { seedStatus='go'; seedReason='Fall is the best time to seed cool-season grasses. Soil still warm, temps cooling.'; }
+  else if (isRaining) { seedStatus='caution'; seedReason='Heavy rain can wash new seed away. Light moisture is fine but hold off in heavy rain.'; }
+  else { seedStatus='caution'; seedReason='Not the ideal seeding season for your grass type, but it can still work in some conditions.'; }
+  recs.push({ activity:'Seeding', icon:'🌾', status:seedStatus, reason:seedReason });
+
+  return recs;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WEATHER ICONS
+// ═══════════════════════════════════════════════════════════════
+function wxIcon(str) {
+  if (!str) return '🌡️';
+  const s = str.toLowerCase();
+  if (s.includes('thunder')) return '⛈️';
+  if (s.includes('heavy rain') || s.includes('heavy shower')) return '🌧️';
+  if (s.includes('rain') || s.includes('shower') || s.includes('drizzle')) return '🌦️';
+  if (s.includes('snow') || s.includes('sleet') || s.includes('flurr')) return '❄️';
+  if (s.includes('fog') || s.includes('mist') || s.includes('haze')) return '🌫️';
+  if (s.includes('mostly sunny') || s.includes('mostly clear')) return '🌤️';
+  if (s.includes('partly') || s.includes('mix')) return '⛅';
+  if (s.includes('mostly cloudy') || s.includes('overcast')) return '🌥️';
+  if (s.includes('cloudy')) return '☁️';
+  if (s.includes('sunny') || s.includes('clear')) return '☀️';
+  if (s.includes('wind')) return '💨';
+  if (s.includes('hot')) return '🌡️';
+  return '🌡️';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WEATHER CASCADE: NWS → Open-Meteo → Claude AI
+//  Local browser:  tries NWS then Open-Meteo (both free, no key)
+//  Claude sandbox: falls back to Claude AI seasonal estimate
+// ═══════════════════════════════════════════════════════════════
+
+let wxFetchInProgress = false;
+
+async function fetchWeather() {
+  if (wxFetchInProgress) return;
+  wxFetchInProgress = true;
+  const lat = state.settings.lat || 36.1627;
+  const lon = state.settings.lon || -86.7816;
+  try {
+    setWxStatus('loading', 'Connecting to National Weather Service…');
+    if (await fetchWeatherNWS(lat, lon)) return;
+    setWxStatus('loading', 'NWS unavailable — trying Open-Meteo…');
+    if (await fetchWeatherOpenMeteo(lat, lon)) return;
+    setWxStatus('loading', 'Live weather blocked — asking Claude AI for estimate…');
+    await fetchWeatherClaude();
+  } finally {
+    wxFetchInProgress = false;
+  }
+}
+
+function retryWeather() { wxFetchInProgress = false; fetchWeather(); }
+
+// ── 1. NWS (live, official, no key needed) ────────────────────
+async function fetchWeatherNWS(lat, lon) {
+  try {
+    const timeout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
+    const pointRes = await Promise.race([
+      fetch('https://api.weather.gov/points/' + lat.toFixed(4) + ',' + lon.toFixed(4),
+        { headers: { 'Accept': 'application/geo+json' } }),
+      timeout(10000)
+    ]);
+    if (!pointRes.ok) throw new Error('NWS points ' + pointRes.status);
+    const props = (await pointRes.json()).properties;
+    state.settings.grid = props.gridId + '/' + props.gridX + ',' + props.gridY;
+
+    const [fRes, hRes] = await Promise.all([
+      Promise.race([fetch(props.forecast, { headers: { 'Accept': 'application/geo+json' } }), timeout(10000)]),
+      Promise.race([fetch(props.forecastHourly, { headers: { 'Accept': 'application/geo+json' } }), timeout(10000)])
+    ]);
+    if (!fRes.ok || !hRes.ok) throw new Error('NWS forecast failed');
+    const [fData, hData] = await Promise.all([fRes.json(), hRes.json()]);
+    const periods = fData.properties.periods;
+    const now     = hData.properties.periods[0];
+
+    state.weather = {
+      temp: now.temperature, unit: now.temperatureUnit,
+      condition: now.shortForecast, icon: wxIcon(now.shortForecast),
+      wind: now.windSpeed + ' ' + now.windDirection,
+      humidity: now.relativeHumidity ? now.relativeHumidity.value : null,
+      source: 'NWS', fetchedAt: new Date().toISOString()
+    };
+    const dayP   = periods.filter(function(p) { return  p.isDaytime; });
+    const nightP = periods.filter(function(p) { return !p.isDaytime; });
+    state.forecast = dayP.slice(0, 7).map(function(dp) {
+      const date  = dp.startTime.slice(0, 10);
+      const night = nightP.find(function(n) { return n.startTime.slice(0, 10) === date; });
+      const prob  = dp.probabilityOfPrecipitation ? dp.probabilityOfPrecipitation.value || 0 : 0;
+      return {
+        date: date, name: dp.name,
+        hi: dp.temperature, lo: night ? night.temperature : '--',
+        shortForecast: dp.shortForecast, icon: wxIcon(dp.shortForecast),
+        precip: prob, wind: dp.windSpeed || ''
+      };
+    });
+    state.wxMeta = {
+      source: 'NWS', fetchedAt: new Date().toISOString(),
+      office: props.gridId, gridX: props.gridX, gridY: props.gridY,
+      forecastUrl: props.forecast,
+      city: props.relativeLocation && props.relativeLocation.properties ? props.relativeLocation.properties.city : '',
+      stateName: props.relativeLocation && props.relativeLocation.properties ? props.relativeLocation.properties.state : ''
+    };
+    saveState();
+    setWxStatus('ok', 'National Weather Service \u00b7 Updated ' + new Date().toLocaleTimeString());
+    afterWeatherLoad();
+    return true;
+  } catch(e) { console.warn('NWS failed:', e.message); return false; }
+}
+
+// ── 2. Open-Meteo (free, no key, CORS-open) ───────────────────
+async function fetchWeatherOpenMeteo(lat, lon) {
+  try {
+    const timeout = ms => new Promise((_, r) => setTimeout(() => r(new Error('timeout')), ms));
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+      '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,apparent_temperature' +
+      '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max' +
+      '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=7';
+    const res = await Promise.race([fetch(url), timeout(10000)]);
+    if (!res.ok) throw new Error('Open-Meteo ' + res.status);
+    const d = await res.json();
+    const c = d.current;
+    const desc = wmoCodeDesc(c.weather_code);
+    const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    state.weather = {
+      temp: Math.round(c.temperature_2m), feelsLike: Math.round(c.apparent_temperature),
+      unit: 'F', condition: desc, icon: wxIcon(desc),
+      wind: Math.round(c.wind_speed_10m) + ' mph',
+      humidity: c.relative_humidity_2m,
+      source: 'Open-Meteo', fetchedAt: new Date().toISOString()
+    };
+    state.forecast = d.daily.time.map(function(dateStr, i) {
+      const dt = new Date(dateStr + 'T12:00:00');
+      const fd = wmoCodeDesc(d.daily.weather_code[i]);
+      return {
+        date: dateStr, name: i === 0 ? 'Today' : dayNames[dt.getDay()],
+        hi: Math.round(d.daily.temperature_2m_max[i]), lo: Math.round(d.daily.temperature_2m_min[i]),
+        shortForecast: fd, icon: wxIcon(fd),
+        precip: d.daily.precipitation_probability_max[i] || 0,
+        wind: Math.round(d.daily.wind_speed_10m_max[i]) + ' mph'
+      };
+    });
+    state.wxMeta = { source: 'Open-Meteo', fetchedAt: new Date().toISOString() };
+    saveState();
+    setWxStatus('ok', 'Open-Meteo \u00b7 Updated ' + new Date().toLocaleTimeString());
+    afterWeatherLoad();
+    return true;
+  } catch(e) { console.warn('Open-Meteo failed:', e.message); return false; }
+}
+
+function wmoCodeDesc(code) {
+  var map = {
+    0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Cloudy',
+    45:'Fog',48:'Fog',51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',
+    61:'Light Rain',63:'Rain',65:'Heavy Rain',
+    71:'Light Snow',73:'Snow',75:'Heavy Snow',77:'Snow',
+    80:'Showers',81:'Rain Showers',82:'Heavy Showers',
+    95:'Thunderstorms',96:'Thunderstorms',99:'Thunderstorms'
+  };
+  return map[code] || 'Partly Cloudy';
+}
+
+// ── 3. Claude AI fallback (sandbox / offline) ─────────────────
+async function fetchWeatherClaude() {
+  const location = state.settings.location || 'Nashville, TN';
+  const now      = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const timeStr  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dates    = [];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(now); d.setDate(d.getDate() + i);
+    dates.push({ dateStr: d.toISOString().slice(0, 10), name: i === 0 ? 'Today' : dayNames[d.getDay()] });
+  }
+  var dateLine = dates.map(function(d) { return d.dateStr + '="' + d.name + '"'; }).join(', ');
+  var prompt = 'You are a weather data API. Generate realistic current conditions and a 7-day forecast for ' + location +
+    ' on ' + todayStr + ' at ' + timeStr + '. Use real seasonal climate patterns.\n\n' +
+    'Respond ONLY with valid JSON, no markdown, no commentary:\n' +
+    '{"current":{"temp":0,"feelsLike":0,"condition":"","wind":"","humidity":0,"dewpoint":0},' +
+    '"forecast":[{"date":"","name":"","hi":0,"lo":0,"shortForecast":"","precip":0,"wind":""}]}\n\n' +
+    'Dates/names: ' + dateLine;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!res.ok) throw new Error('Claude API ' + res.status);
+    const data = await res.json();
+    const raw  = (data.content.find(function(b) { return b.type === 'text'; }) || {}).text || '';
+    const wx   = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    state.weather = {
+      temp: wx.current.temp, feelsLike: wx.current.feelsLike,
+      unit: 'F', condition: wx.current.condition, icon: wxIcon(wx.current.condition),
+      wind: wx.current.wind, humidity: wx.current.humidity, dewpoint: wx.current.dewpoint,
+      source: 'Claude AI', fetchedAt: new Date().toISOString()
+    };
+    state.forecast = wx.forecast.map(function(f) {
+      return { date: f.date, name: f.name, hi: f.hi, lo: f.lo,
+        shortForecast: f.shortForecast, icon: wxIcon(f.shortForecast),
+        precip: f.precip || 0, wind: f.wind || '' };
+    });
+    state.wxMeta = { source: 'Claude AI', location: location, fetchedAt: new Date().toISOString() };
+    saveState();
+    setWxStatus('ok', 'Claude AI estimate for ' + location + ' \u00b7 ' + new Date().toLocaleTimeString());
+    afterWeatherLoad();
+  } catch(e) {
+    console.error('Claude weather error:', e);
+    setWxStatus('error', 'Weather unavailable. Check your connection.');
+    renderDashboard();
+  }
+}
+
+function afterWeatherLoad() {
+  renderDashboard();
+  if (document.getElementById('section-weather').classList.contains('active')) { renderWeather(); renderWxApiInfo(); }
+  if (document.getElementById('section-calendar').classList.contains('active')) renderCalendar();
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+function renderDashboard() {
+  renderStats();
+  renderDashWeather();
+  renderDashRecommendations();
+  renderDashRecent();
+  renderDashForecast();
+}
+function renderStats() {
+  const acts = state.activities;
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const mowsThisMonth = acts.filter(a => a.type === 'mow' && a.date.startsWith(thisMonth)).length;
+  const lastMow  = acts.find(a => a.type === 'mow');
+  const lastFert = acts.find(a => a.type === 'fertilize');
+  const lastHerb = acts.find(a => a.type === 'herbicide');
+  function daysSince(entry) {
+    if (!entry) return '—';
+    const d = Math.floor((Date.now() - new Date(entry.date + 'T12:00').getTime()) / (1000 * 60 * 60 * 24));
+    return d === 0 ? 'Today' : d === 1 ? '1d ago' : `${d}d ago`;
+  }
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat"><div class="stat-label">Last Mow</div><div class="stat-value" style="font-size:1.1rem">${daysSince(lastMow)}</div></div>
+    <div class="stat"><div class="stat-label">Mows This Month</div><div class="stat-value">${mowsThisMonth}</div></div>
+    <div class="stat"><div class="stat-label">Last Fertilize</div><div class="stat-value" style="font-size:1.1rem">${daysSince(lastFert)}</div></div>
+    <div class="stat"><div class="stat-label">Last Herbicide</div><div class="stat-value" style="font-size:1.1rem">${daysSince(lastHerb)}</div></div>`;
+}
+function renderDashWeather() {
+  const el = document.getElementById('dash-weather-now');
+  if (!state.weather) { el.innerHTML = `<div class="text-sm text-muted">Loading weather…</div>`; return; }
+  const w = state.weather;
+  const feelsLine = w.feelsLike ? `<br>🌡️ Feels like ${w.feelsLike}°${w.unit}` : '';
+  el.innerHTML = `<div class="weather-current">
+    <div class="weather-icon">${w.icon}</div>
+    <div>
+      <div class="weather-temp">${w.temp}°${w.unit}</div>
+      <div class="weather-condition">${w.condition}</div>
+      <div class="weather-extra">
+        💨 ${w.wind}
+        ${w.humidity != null ? `&nbsp;·&nbsp;💧 ${Math.round(w.humidity)}% humidity` : ''}
+        ${feelsLine}
+      </div>
+    </div>
+  </div>`;
+}
+function renderDashRecommendations() {
+  const el = document.getElementById('dash-recommendations');
+  const today = new Date().toISOString().slice(0, 10);
+  const fcast = state.forecast ? state.forecast.find(f => f.date === today) : null;
+  const recs = getRecommendations(fcast, today);
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    ${recs.map(r => `
+      <div class="rec-card ${r.status}">
+        <div class="rec-title">${r.icon} ${r.activity} &mdash; <span style="font-weight:400">${r.status === 'go' ? '✅ Good to go' : r.status === 'caution' ? '⚠️ Use caution' : '🚫 Not recommended'}</span></div>
+        <div class="rec-reason">${r.reason}</div>
+      </div>`).join('')}
+  </div>`;
+}
+function renderDashRecent() {
+  const el = document.getElementById('dash-recent');
+  const recent = state.activities.slice(0, 5);
+  if (!recent.length) { el.innerHTML = `<div class="empty-state"><div class="emoji">🌱</div><div>No activities yet. Start tracking!</div></div>`; return; }
+  el.innerHTML = recent.map(a => entryHTML(a)).join('');
+}
+function renderDashForecast() {
+  const el = document.getElementById('dash-forecast');
+  if (!state.forecast || !state.forecast.length) { el.innerHTML = `<div class="text-sm text-muted">Loading forecast…</div>`; return; }
+  el.innerHTML = state.forecast.slice(0, 7).map(f => `
+    <div class="forecast-day">
+      <div class="forecast-day-name">${(f.name || '').slice(0, 3)}</div>
+      <div class="forecast-icon">${f.icon}</div>
+      <div class="forecast-hi">${f.hi}°</div>
+      <div class="forecast-lo">${f.lo}°</div>
+      ${f.precip > 10 ? `<div class="forecast-precip">💧${f.precip}%</div>` : ''}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  WEATHER PAGE
+// ═══════════════════════════════════════════════════════════════
+function renderWeather() {
+  const w = state.weather;
+  const elCur = document.getElementById('weather-current-full');
+  if (w) {
+    const feelsLine = w.feelsLike ? `<br>🌡️ Feels like: ${w.feelsLike}°${w.unit}` : '';
+    elCur.innerHTML = `<div class="weather-current">
+      <div class="weather-icon" style="font-size:3.5rem">${w.icon}</div>
+      <div>
+        <div class="weather-temp">${w.temp}°${w.unit}</div>
+        <div class="weather-condition">${w.condition}</div>
+        <div class="weather-extra" style="margin-top:.5rem">
+          💨 Wind: ${w.wind}<br>
+          ${w.humidity != null ? `💧 Humidity: ${Math.round(w.humidity)}%<br>` : ''}
+          ${feelsLine}
+        </div>
+        <div style="margin-top:.75rem">
+          <a href="https://forecast.weather.gov/MapClick.php?lat=${state.settings.lat}&lon=${state.settings.lon}"
+             target="_blank" style="color:var(--blue-600);font-size:13px">🔗 Full NWS Forecast</a>
+        </div>
+      </div>
+    </div>`;
+  } else {
+    elCur.innerHTML = `<div class="text-sm text-muted">Loading…</div>`;
+  }
+  const elF = document.getElementById('weather-forecast-full');
+  if (state.forecast && state.forecast.length) {
+    elF.innerHTML = state.forecast.map(f => `
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.625rem 0;border-bottom:1px solid var(--border)">
+        <div style="width:90px;font-weight:500;font-size:13px">${f.name}</div>
+        <div style="font-size:1.4rem">${f.icon}</div>
+        <div style="flex:1;font-size:13px;color:var(--text2)">${f.shortForecast}</div>
+        <div style="text-align:right;font-size:13px"><span style="font-weight:600">${f.hi}°</span> / <span style="color:var(--text2)">${f.lo}°</span></div>
+        ${f.precip > 10 ? `<div class="badge badge-blue" style="font-size:10px;white-space:nowrap">💧${f.precip}%</div>` : ''}
+      </div>`).join('');
+  } else {
+    elF.innerHTML = `<div class="text-sm text-muted">Loading forecast…</div>`;
+  }
+}
+
+// Weather page: show API source details
+function renderWxApiInfo() {
+  const el = document.getElementById('wx-api-details');
+  if (!el) return;
+  const m = state.wxMeta;
+  if (!m) { el.innerHTML = `<span>No weather data loaded yet.</span>`; return; }
+  const fetchedAt = m.fetchedAt ? new Date(m.fetchedAt).toLocaleString() : '—';
+  el.innerHTML = `
+    <strong>Source:</strong> Claude AI (api.anthropic.com/v1/messages)<br>
+    <strong>Model:</strong> claude-sonnet-4-20250514<br>
+    <strong>Location:</strong> ${m.location || state.settings.location}<br>
+    <strong>Last generated:</strong> ${fetchedAt}<br>
+    <br>
+    <span style="color:var(--green-600);font-weight:500">✅ Claude-generated weather</span> — 
+    based on real seasonal climate patterns for your location and today's date.
+    Refreshes every 30 min or on location change.<br>
+    <br>
+    <span style="color:var(--text2);font-size:12px">Note: This is AI-generated climate data, not a live weather feed.
+    For real-time conditions, download the app and open it locally — it will connect directly to the National Weather Service.</span>
+    <br><br>
+    <button class="retry-btn" style="font-size:13px" onclick="retryWeather()">🔄 Refresh now</button>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════════════════
+function loadSettings() {
+  document.getElementById('setting-location').value = state.settings.location || 'Nashville, TN';
+  document.getElementById('setting-grid').value = 'Claude AI (api.anthropic.com)';
+  document.getElementById('setting-coords').value =
+    state.settings.lat ? `${state.settings.lat.toFixed(4)}, ${state.settings.lon.toFixed(4)}` : '';
+  document.getElementById('setting-grass').value = state.settings.grass || 'bermuda';
+  document.getElementById('setting-size').value = state.settings.size || '';
+  document.getElementById('setting-height').value = state.settings.height || '';
+}
+
+async function saveSettings() {
+  const loc = document.getElementById('setting-location').value.trim();
+  if (!loc) { alert('Please enter a location.'); return; }
+  state.settings.location = loc;
+  // Geocode via Nominatim (OpenStreetMap)
+  try {
+    const geoRes = await fetchWithTimeout(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(loc)}&format=json&limit=1`,
+      { headers: { 'Accept': 'application/json' } },
+      8000
+    );
+    const geoData = await geoRes.json();
+    if (geoData.length) {
+      state.settings.lat = parseFloat(geoData[0].lat);
+      state.settings.lon = parseFloat(geoData[0].lon);
+    }
+  } catch(e) { console.warn('Geocode failed', e); }
+  saveState();
+  loadSettings();
+  wxFetchInProgress = false;
+  fetchWeather();
+  alert('Location saved! Refreshing weather…');
+}
+
+function saveLawnProfile() {
+  state.settings.grass  = document.getElementById('setting-grass').value;
+  state.settings.size   = parseFloat(document.getElementById('setting-size').value) || 0;
+  state.settings.height = parseFloat(document.getElementById('setting-height').value) || 3.5;
+  saveState();
+  alert('Lawn profile saved!');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `yardlog-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (imported.activities) state.activities = imported.activities;
+      if (imported.settings)   state.settings   = { ...state.settings, ...imported.settings };
+      saveState();
+      renderDashboard();
+      alert(`Imported ${imported.activities?.length || 0} activities!`);
+    } catch(err) { alert('Invalid file format.'); }
+  };
+  reader.readAsText(file);
+}
+function clearData() {
+  if (!confirm('This will delete ALL activity logs. Are you sure?')) return;
+  state.activities = [];
+  saveState();
+  renderDashboard();
+  alert('All activities cleared.');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════════
+renderDashboard();
+fetchWeather();
+setInterval(fetchWeather, 30 * 60 * 1000);
+</script>
+</body>
+</html>
